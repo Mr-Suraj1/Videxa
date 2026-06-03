@@ -1,54 +1,185 @@
-# Videxa
+# 🎥 Videxa – AI Video Assistant with RAG
 
-Videxa is a Python-based audio processing project focused on downloading, converting, and chunking audio files.
+Videxa is an AI-powered Video Intelligence platform that transforms YouTube videos, meetings, lectures, podcasts, and local media files into actionable insights.
 
-## Features
+It combines Speech-to-Text, AI Summarization, Vector Search, and Retrieval-Augmented Generation (RAG) to help users understand and interact with video content efficiently.
 
-- Download audio from YouTube URLs using `yt-dlp`
-- Convert audio/video files to WAV format using `pydub`
-- Split long audio recordings into smaller WAV chunks
-- Designed to support speech-to-text and RAG workflows with local Whisper, translation, and LangChain dependencies
+## ✨ Features
 
-## Requirements
+### 🎙️ Audio & Video Processing
 
-Install dependencies from `Requirements.txt`:
+* Process YouTube URLs directly
+* Upload and analyze local audio/video files
+* Automatic audio extraction and conversion
+* Long audio chunking for efficient transcription
+
+### 📝 AI Transcription
+
+* Powered by OpenAI Whisper
+* Multi-language support
+* Accurate speech-to-text conversion
+* Handles long recordings automatically
+
+### 📄 Smart Summarization
+
+* Generate concise meeting summaries
+* Extract key insights and highlights
+* Create AI-generated titles
+* Reduce hours of content into readable notes
+
+### 🔍 RAG-Powered Chat
+
+* Ask questions about the video content
+* Context-aware answers using vector search
+* ChromaDB-powered document retrieval
+* Conversational interaction with transcripts
+
+### 🎨 Modern UI
+
+* Built with Streamlit
+* Dark futuristic interface
+* Interactive workflow
+* Real-time processing feedback
+
+---
+
+## 🏗️ Tech Stack
+
+### AI & LLM
+
+* OpenAI Whisper
+* LangChain
+* Sentence Transformers
+
+### Vector Database
+
+* ChromaDB
+
+### Backend
+
+* Python
+* yt-dlp
+* pydub
+
+### Frontend
+
+* Streamlit
+
+---
+
+## 📂 Project Structure
+
+```text
+VIDEXA/
+├── core/
+│   ├── extractor.py
+│   ├── transcriber.py
+│   ├── summarizer.py
+│   ├── vector_store.py
+│   └── rag_engine.py
+│
+├── utils/
+│   └── audio_processor.py
+│
+├── app.py
+├── main.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+---
+
+## 🚀 Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/videxa.git
+cd videxa
+```
+
+### Create Virtual Environment
+
+```bash
+python -m venv .venv
+```
+
+### Activate Environment
+
+#### Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+### Install Dependencies
 
 ```bash
 pip install -r Requirements.txt
 ```
 
-> Note: `ffmpeg` must be installed on your system separately for audio conversion to work.
+---
 
-## Usage
+## ⚙️ Setup
 
-The main audio utility lives in `utils/audio_processor.py`.
+Create a `.env` file in the root directory:
 
-### Process a YouTube video
-
-```python
-from utils.audio_processor import process_input
-
-chunks = process_input("https://www.youtube.com/watch?v=YOUR_VIDEO_ID")
-print(chunks)
+```env
+OPENAI_API_KEY=your_api_key_here
 ```
 
-### Process a local file
+---
 
-```python
-from utils.audio_processor import process_input
+## ▶️ Run Application
 
-chunks = process_input("path/to/audio_or_video_file.mp4")
-print(chunks)
+```bash
+python -m streamlit run app.py
 ```
 
-## Project Structure
+Application will be available at:
 
-- `Requirements.txt` - Python dependencies
-- `utils/audio_processor.py` - core audio download, convert, and chunking utilities
-- `downloades/` - output directory for downloaded audio files
-- `.env` - optional environment file for secrets and API keys
+```text
+http://localhost:8501
+```
 
-## Notes
+---
 
-- The repository currently provides a utility module rather than a complete CLI or Streamlit app entrypoint.
-- If you want to extend Videxa, add a main application script or Streamlit frontend to orchestrate audio processing and transcription.
+## 🔄 Workflow
+
+1. Paste a YouTube URL or provide a local file path.
+2. Select the desired language.
+3. Click **Analyse**.
+4. Videxa will:
+
+   * Extract audio
+   * Transcribe speech
+   * Generate summaries
+   * Build vector embeddings
+   * Enable RAG chat
+
+---
+
+## 🎯 Future Improvements
+
+* Speaker diarization
+* Meeting action items extraction
+* PDF export
+* Multi-video knowledge base
+* Cloud deployment
+* Team collaboration features
+
+---
+
+## 👨‍💻 Author
+
+**Suraj Kumar Ray**
+
+B.Tech Information Technology
+AI & Full Stack Developer
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License.
