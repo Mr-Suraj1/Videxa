@@ -1,4 +1,9 @@
-.env
-downloads/
-*.wav
+.venv/
+.vscode/
 __pycache__/
+*.pyc
+.env
+downloades/
+
+*.log
+.DS_Store
