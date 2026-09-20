@@ -126,7 +126,8 @@ pip install -r Requirements.txt
 Create a `.env` file in the root directory:
 
 ```env
-OPENAI_API_KEY=your_api_key_here
+MISTRAL_API_KEY=your_api_key_here
+# SARVAM_API_KEY=your_api_key_here  # only needed for Hinglish transcription
 ```
 
 ---

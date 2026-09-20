@@ -1,66 +1,143 @@
+"""Validated, temporary audio preparation for Videxa."""
+
+from __future__ import annotations
+
+import shutil
+import uuid
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
 import yt_dlp
 from pydub import AudioSegment
-import os
 
-DOWNLOAD_DIR = 'downloades'
-os.makedirs(DOWNLOAD_DIR,exist_ok = True)
+DOWNLOAD_DIR = Path("downloades")
+SUPPORTED_MEDIA_EXTENSIONS = {
+    ".aac", ".avi", ".flac", ".m4a", ".mkv", ".mov", ".mp3", ".mp4", ".mpeg",
+    ".mpg", ".ogg", ".wav", ".webm", ".wma",
+}
+YOUTUBE_HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtu.be"}
 
-def download_youtube_audio(url :str) ->str:
-    output_path = os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s")
-    ydl_opts = {
+
+class InputValidationError(ValueError):
+    """An input cannot safely be processed by the media pipeline."""
+
+
+class MediaProcessingError(RuntimeError):
+    """Download, conversion, or chunking could not produce usable audio."""
+
+
+def validate_input(source: str) -> tuple[str, str]:
+    """Validate a YouTube URL or an existing supported local media file."""
+    if not source or not source.strip():
+        raise InputValidationError("Enter a YouTube URL or a path to a media file.")
+    candidate = source.strip()
+    parsed = urlparse(candidate)
+    windows_path = len(candidate) > 2 and candidate[1] == ":" and candidate[2] in {"/", "\\"}
+    if (parsed.scheme or parsed.netloc) and not windows_path:
+        if parsed.scheme not in {"http", "https"} or parsed.hostname not in YOUTUBE_HOSTS:
+            raise InputValidationError("Enter a valid YouTube URL (youtube.com or youtu.be).")
+        video_id = parsed.path.strip("/") if parsed.hostname in {"youtu.be", "www.youtu.be"} else parse_qs(parsed.query).get("v", [""])[0]
+        if not video_id and not parsed.path.startswith(("/shorts/", "/live/")):
+            raise InputValidationError("This YouTube URL is malformed or missing a video identifier.")
+        return "youtube", candidate
+
+    path = Path(candidate).expanduser()
+    if not path.is_file():
+        raise InputValidationError("The local media file does not exist or is not a file.")
+    if path.suffix.lower() not in SUPPORTED_MEDIA_EXTENSIONS:
+        supported = ", ".join(sorted(SUPPORTED_MEDIA_EXTENSIONS))
+        raise InputValidationError(f"Unsupported media file type. Supported types: {supported}.")
+    return "file", str(path.resolve())
+
+
+def _require_ffmpeg() -> None:
+    if not shutil.which("ffmpeg"):
+        raise MediaProcessingError("FFmpeg is required for media conversion. Install FFmpeg and add it to PATH.")
+
+
+def _new_work_dir() -> Path:
+    work_dir = DOWNLOAD_DIR / f"session_{uuid.uuid4().hex}"
+    work_dir.mkdir(parents=True, exist_ok=False)
+    return work_dir
+
+
+def download_youtube_audio(url: str, work_dir: Path) -> str:
+    _require_ffmpeg()
+    options = {
         "format": "bestaudio/best",
-        "outtmpl": output_path,
-        "postprocessors": [
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "wav",
-                "preferredquality": "192",
-            }
-        ],
+        "outtmpl": str(work_dir / "source.%(ext)s"),
+        "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "wav", "preferredquality": "192"}],
         "quiet": True,
+        "noplaylist": True,
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-        filename = ydl.prepare_filename(info).replace(".webm", ".wav").replace(".m4a", ".wav")
-    return filename
-
-#data = download_youtube_audio("https://www.youtube.com/watch?v=3JZ_D3ELwOQ")
-
-def convert_to_wav(input_path: str) -> str:
-    """Convert any audio/video file to WAV format using pydub."""
-    output_path = os.path.splitext(input_path)[0] + "_converted.wav"
-    audio = AudioSegment.from_file(input_path)
-    audio = audio.set_channels(1).set_frame_rate(16000) #16khz
-    audio.export(output_path, format="wav")
-    return output_path
-
-#print(convert_to_wav(data))
+    try:
+        with yt_dlp.YoutubeDL(options) as ydl:
+            ydl.extract_info(url, download=True)
+    except Exception as exc:
+        raise MediaProcessingError("Could not download audio from that YouTube video.") from exc
+    wav_files = list(work_dir.glob("*.wav"))
+    if not wav_files:
+        raise MediaProcessingError("The YouTube download completed but produced no WAV audio.")
+    return str(wav_files[0])
 
 
-def chunk_audio(wav_path : str , chunk_minutes : int = 10) -> list:
-    audio = AudioSegment.from_wav(wav_path)
-    chunk_ms = chunk_minutes * 60 * 1000 
+def convert_to_wav(input_path: str, work_dir: Path) -> str:
+    _require_ffmpeg()
+    output_path = work_dir / "audio.wav"
+    try:
+        audio = AudioSegment.from_file(input_path)
+        if len(audio) == 0:
+            raise MediaProcessingError("The media file contains no audio.")
+        audio.set_channels(1).set_frame_rate(16000).export(output_path, format="wav")
+    except MediaProcessingError:
+        raise
+    except Exception as exc:
+        raise MediaProcessingError("Could not read or convert this media file. It may be corrupted or unsupported.") from exc
+    if not output_path.is_file() or output_path.stat().st_size == 0:
+        raise MediaProcessingError("Audio conversion produced an empty output file.")
+    return str(output_path)
 
-    chunks = []
 
-    for i, start in enumerate(range(0,len(audio),chunk_ms)):
-        chunk = audio[start : start + chunk_ms]
-        chunk_path = f"{wav_path}_chunk_{i}.wav"
-        chunk.export(chunk_path , format = "wav")
+def chunk_audio(wav_path: str, chunk_minutes: int = 10) -> list[str]:
+    if chunk_minutes < 1:
+        raise ValueError("Chunk length must be at least one minute.")
+    try:
+        audio = AudioSegment.from_wav(wav_path)
+        if len(audio) == 0:
+            raise MediaProcessingError("The converted audio is empty.")
+        chunks = []
+        for index, start in enumerate(range(0, len(audio), chunk_minutes * 60 * 1000)):
+            chunk_path = Path(f"{wav_path}_chunk_{index}.wav")
+            audio[start:start + chunk_minutes * 60 * 1000].export(chunk_path, format="wav")
+            if not chunk_path.is_file() or chunk_path.stat().st_size == 0:
+                raise MediaProcessingError("Audio chunking produced an empty chunk.")
+            chunks.append(str(chunk_path))
+        return chunks
+    except MediaProcessingError:
+        raise
+    except Exception as exc:
+        raise MediaProcessingError("Could not split the audio into transcription chunks.") from exc
 
-        chunks.append(chunk_path)
-    
-    return chunks
 
-def process_input(source: str) -> list:
-    if source.startswith("http://") or source.startswith("https://"):
-        print("Detected YouTube URL. Downloading audio...")
-        wav_path = download_youtube_audio(source)
-    else:
-        print("Detected local file. Converting to WAV...")
-        wav_path = convert_to_wav(source)
+def cleanup_audio_files(chunks: list[str]) -> None:
+    """Remove only Videxa-created temporary session directories."""
+    download_root = DOWNLOAD_DIR.resolve()
+    for chunk in chunks:
+        path = Path(chunk).resolve()
+        try:
+            relative = path.relative_to(download_root)
+        except ValueError:
+            continue
+        if relative.parts and relative.parts[0].startswith("session_"):
+            shutil.rmtree(download_root / relative.parts[0], ignore_errors=True)
 
-    print("Chunking audio...")
-    chunks = chunk_audio(wav_path)
-    print(f"Audio ready — {len(chunks)} chunk(s) created.")
-    return chunks
+
+def process_input(source: str) -> list[str]:
+    kind, value = validate_input(source)
+    work_dir = _new_work_dir()
+    try:
+        wav_path = download_youtube_audio(value, work_dir) if kind == "youtube" else convert_to_wav(value, work_dir)
+        return chunk_audio(wav_path)
+    except Exception:
+        shutil.rmtree(work_dir, ignore_errors=True)
+        raise

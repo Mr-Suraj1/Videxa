@@ -1,11 +1,21 @@
 import streamlit as st
+import logging
 import time
+import uuid
 from dotenv import load_dotenv
-from utils.audio_processor import process_input
+from utils.audio_processor import (
+    InputValidationError,
+    MediaProcessingError,
+    cleanup_audio_files,
+    process_input,
+    validate_input,
+)
 from core.transcriber import transcribe_all
 from core.summarizer import summarize, generate_title
 from core.extractor import extract_action_items, extract_key_decisions, extract_questions
 from core.rag_engine import build_rag_chain, ask_question
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -362,8 +372,10 @@ st.markdown("---")
 
 # ── Run Pipeline ────────────────────────────────────────────────────────────────
 if run_btn:
-    if not source.strip():
-        st.error("Please enter a YouTube URL or file path.")
+    try:
+        validate_input(source)
+    except InputValidationError as exc:
+        st.error(str(exc))
     else:
         st.session_state.pipeline_done = False
         st.session_state.result = None
@@ -375,6 +387,7 @@ if run_btn:
         def update_step(key, state):
             st.session_state.pipeline_steps[key] = state
 
+        chunks = []
         try:
             with progress_placeholder.container():
                 st.info("⚙️ Pipeline running — see sidebar for live status…")
@@ -402,7 +415,8 @@ if run_btn:
             update_step("extract", "done")
 
             update_step("rag", "active")
-            rag_chain = build_rag_chain(transcript)
+            session_id = uuid.uuid4().hex
+            rag_chain = build_rag_chain(transcript, session_id=session_id)
             update_step("rag", "done")
 
             st.session_state.result = {
@@ -413,6 +427,7 @@ if run_btn:
                 "key_decisions": decisions,
                 "open_questions": questions,
                 "rag_chain": rag_chain,
+                "session_id": session_id,
             }
             st.session_state.pipeline_done = True
             progress_placeholder.success("✅ Analysis complete!")
@@ -420,11 +435,19 @@ if run_btn:
             progress_placeholder.empty()
             st.rerun()
 
-        except Exception as e:
+        except (InputValidationError, MediaProcessingError) as exc:
             for k in ["audio","transcript","title","summary","extract","rag"]:
                 if st.session_state.pipeline_steps.get(k) == "active":
                     st.session_state.pipeline_steps[k] = "pending"
-            progress_placeholder.error(f"❌ Error: {e}")
+            progress_placeholder.error(f"❌ {exc}")
+        except Exception:
+            logger.exception("Videxa pipeline failed")
+            for k in ["audio","transcript","title","summary","extract","rag"]:
+                if st.session_state.pipeline_steps.get(k) == "active":
+                    st.session_state.pipeline_steps[k] = "pending"
+            progress_placeholder.error("❌ Analysis could not be completed. Check your media and service configuration, then try again.")
+        finally:
+            cleanup_audio_files(chunks)
 
 # ── Results ──────────────────────────────────────────────────────────────────────
 if st.session_state.result:
@@ -514,12 +537,18 @@ if st.session_state.result:
     with chat_col2:
         send_btn = st.button("Send →", use_container_width=True)
 
-    if send_btn and user_input.strip():
-        with st.spinner("Thinking…"):
-            answer = ask_question(r["rag_chain"], user_input.strip())
-        st.session_state.chat_history.append({"role": "user",      "content": user_input.strip()})
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
-        st.rerun()
+    if send_btn:
+        try:
+            with st.spinner("Thinking…"):
+                answer = ask_question(r["rag_chain"], user_input)
+            st.session_state.chat_history.append({"role": "user", "content": user_input.strip()})
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
+            st.rerun()
+        except ValueError as exc:
+            st.error(str(exc))
+        except Exception:
+            logger.exception("RAG question failed")
+            st.error("I could not answer that question right now. Please try again.")
 
     if st.session_state.chat_history:
         if st.button("🗑️ Clear Chat", type="secondary"):
