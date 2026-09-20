@@ -11,6 +11,7 @@ from utils.audio_processor import (
     validate_input,
 )
 from core.transcriber import transcribe_all
+from core.transcriber import TranscriptionError
 from core.summarizer import summarize, generate_title
 from core.extractor import extract_action_items, extract_key_decisions, extract_questions
 from core.rag_engine import build_rag_chain, ask_question
@@ -375,6 +376,7 @@ if run_btn:
     try:
         validate_input(source)
     except InputValidationError as exc:
+        logger.warning("Input validation failed")
         st.error(str(exc))
     else:
         st.session_state.pipeline_done = False
@@ -389,6 +391,7 @@ if run_btn:
 
         chunks = []
         try:
+            logger.info("Videxa processing started")
             with progress_placeholder.container():
                 st.info("⚙️ Pipeline running — see sidebar for live status…")
 
@@ -430,12 +433,14 @@ if run_btn:
                 "session_id": session_id,
             }
             st.session_state.pipeline_done = True
+            logger.info("Videxa processing completed")
             progress_placeholder.success("✅ Analysis complete!")
             time.sleep(0.5)
             progress_placeholder.empty()
             st.rerun()
 
-        except (InputValidationError, MediaProcessingError) as exc:
+        except (InputValidationError, MediaProcessingError, TranscriptionError) as exc:
+            logger.warning("Videxa processing failed with an expected service or validation error")
             for k in ["audio","transcript","title","summary","extract","rag"]:
                 if st.session_state.pipeline_steps.get(k) == "active":
                     st.session_state.pipeline_steps[k] = "pending"
@@ -453,76 +458,44 @@ if run_btn:
 if st.session_state.result:
     r = st.session_state.result
 
-    # Title banner
-    st.markdown(f"""
-    <div class="card">
-        <div class="card-title">📌 Session Title</div>
-        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text)">
-            {r['title']}
-        </div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown('<div class="card"><div class="card-title">📌 Session Title</div></div>', unsafe_allow_html=True)
+    st.subheader(r["title"])
 
     # Top row: summary + transcript
     col1, col2 = st.columns([3, 2], gap="medium")
 
     with col1:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">📋 Summary</div>
-            <div class="card-content">{r['summary']}</div>
-        </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="card"><div class="card-title">📋 Summary</div></div>', unsafe_allow_html=True)
+        st.write(r["summary"])
 
     with col2:
         with st.expander("📝 Full Transcript", expanded=False):
-            st.markdown(f'<div class="transcript-box">{r["transcript"]}</div>', unsafe_allow_html=True)
+            st.text(r["transcript"])
 
     # Second row: action items | decisions | questions
     c1, c2, c3 = st.columns(3, gap="medium")
 
     with c1:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">✅ Action Items</div>
-            <div class="card-content">{r['action_items']}</div>
-        </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="card"><div class="card-title">✅ Action Items</div></div>', unsafe_allow_html=True)
+        st.write(r["action_items"])
 
     with c2:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">🔑 Key Decisions</div>
-            <div class="card-content">{r['key_decisions']}</div>
-        </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="card"><div class="card-title">🔑 Key Decisions</div></div>', unsafe_allow_html=True)
+        st.write(r["key_decisions"])
 
     with c3:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">❓ Open Questions</div>
-            <div class="card-content">{r['open_questions']}</div>
-        </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="card"><div class="card-title">❓ Open Questions</div></div>', unsafe_allow_html=True)
+        st.write(r["open_questions"])
 
     st.markdown("---")
 
     # ── RAG Chat ──────────────────────────────────────────────────────────────
     st.markdown('<div style="font-family:\'Syne\',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:1rem">💬 Chat with your Meeting</div>', unsafe_allow_html=True)
 
-    # Chat history display
     if st.session_state.chat_history:
-        chat_html = '<div class="chat-container">'
         for msg in st.session_state.chat_history:
-            if msg["role"] == "user":
-                chat_html += f"""
-                <div class="chat-msg" style="align-items:flex-end">
-                    <span class="chat-label user-label">You</span>
-                    <div class="chat-bubble user-bubble">{msg['content']}</div>
-                </div>"""
-            else:
-                chat_html += f"""
-                <div class="chat-msg" style="align-items:flex-start">
-                    <span class="chat-label bot-label">🤖 Assistant</span>
-                    <div class="chat-bubble bot-bubble">{msg['content']}</div>
-                </div>"""
-        chat_html += '</div>'
-        st.markdown(chat_html, unsafe_allow_html=True)
+            with st.chat_message("user" if msg["role"] == "user" else "assistant"):
+                st.write(msg["content"])
     else:
         st.markdown("""
         <div class="card" style="text-align:center;padding:2rem">

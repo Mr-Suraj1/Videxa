@@ -1,5 +1,7 @@
 import whisper
 import os
+import logging
+import time
 import requests
 from pydub import AudioSegment
 
@@ -11,11 +13,24 @@ SARVAM_PIECE_SECONDS = 25
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
 
 
-SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 SARVAM_STT_TRANSLATE_URL = "https://api.sarvam.ai/speech-to-text-translate"
 SARVAM_MODEL = os.getenv("SARVAM_STT_MODEL", "saaras:v2.5")
+SARVAM_TIMEOUT_SECONDS = 120
+SARVAM_MAX_ATTEMPTS = 2
+RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+
+logger = logging.getLogger(__name__)
 
 _model = None
+
+
+class TranscriptionError(RuntimeError):
+    """A transcription provider could not process the requested audio."""
+
+
+def _sarvam_api_key() -> str | None:
+    """Read the configured key at use time, after dotenv has initialized."""
+    return os.getenv("SARVAM_API_KEY")
 
 
 def load_model():
@@ -23,9 +38,13 @@ def load_model():
     global _model  
 
     if _model is None: 
-        print(f"Loading Whisper model: {WHISPER_MODEL} ...")
-        _model = whisper.load_model(WHISPER_MODEL) 
-        print("Whisper model loaded.")
+        logger.info("Loading Whisper model")
+        try:
+            _model = whisper.load_model(WHISPER_MODEL)
+        except Exception as exc:
+            logger.exception("Whisper model could not be loaded")
+            raise TranscriptionError("Whisper could not be started. Check the local model setup.") from exc
+        logger.info("Whisper model loaded")
     return _model 
 
 
@@ -33,31 +52,50 @@ def transcribe_chunk_whisper(chunk_path: str) -> str:
 
     model = load_model()  
 
-    result = model.transcribe(chunk_path, task="transcribe")  
-    return result["text"]  
+    try:
+        result = model.transcribe(chunk_path, task="transcribe")
+        return result["text"]
+    except Exception as exc:
+        logger.exception("Whisper transcription failed")
+        raise TranscriptionError("Whisper could not transcribe this audio chunk.") from exc
 
 
 def _send_to_sarvam(piece_path: str) -> str:
     """Send one ≤30s WAV file to Sarvam and return the English transcript."""
-    headers = {"api-subscription-key": SARVAM_API_KEY}
+    api_key = _sarvam_api_key()
+    if not api_key:
+        raise TranscriptionError("Sarvam is not configured. Set SARVAM_API_KEY before using Hinglish transcription.")
+    headers = {"api-subscription-key": api_key}
 
-    with open(piece_path, "rb") as f:
-        files = {"file": (os.path.basename(piece_path), f, "audio/wav")}
-        data = {"model": SARVAM_MODEL, "with_diarization": "false"}
-        response = requests.post(
-            SARVAM_STT_TRANSLATE_URL,
-            headers=headers,
-            files=files,
-            data=data,
-            timeout=120,
-        )
-
-    if not response.ok:
-        print(f"\n❌ Sarvam returned {response.status_code}")
-        print(f"Response body: {response.text}\n")
-        response.raise_for_status()
-
-    return response.json().get("transcript", "")
+    for attempt in range(1, SARVAM_MAX_ATTEMPTS + 1):
+        try:
+            with open(piece_path, "rb") as f:
+                files = {"file": (os.path.basename(piece_path), f, "audio/wav")}
+                data = {"model": SARVAM_MODEL, "with_diarization": "false"}
+                response = requests.post(
+                    SARVAM_STT_TRANSLATE_URL,
+                    headers=headers,
+                    files=files,
+                    data=data,
+                    timeout=SARVAM_TIMEOUT_SECONDS,
+                )
+            if response.ok:
+                try:
+                    return response.json().get("transcript", "")
+                except ValueError as exc:
+                    logger.warning("Sarvam returned invalid JSON")
+                    raise TranscriptionError("Sarvam returned an invalid transcription response.") from exc
+            if response.status_code not in RETRYABLE_STATUS_CODES or attempt == SARVAM_MAX_ATTEMPTS:
+                logger.warning("Sarvam transcription request failed with status %s", response.status_code)
+                raise TranscriptionError("Sarvam could not transcribe this audio. Check your API configuration and try again.")
+            logger.warning("Sarvam temporary failure; retrying once")
+        except requests.RequestException as exc:
+            if attempt == SARVAM_MAX_ATTEMPTS:
+                logger.warning("Sarvam network request failed after retry")
+                raise TranscriptionError("Sarvam is temporarily unavailable. Please try again.") from exc
+            logger.warning("Sarvam network request failed; retrying once")
+        time.sleep(1)
+    raise TranscriptionError("Sarvam is temporarily unavailable. Please try again.")
 
 
 def transcribe_chunk_sarvam(chunk_path: str) -> str:
@@ -65,8 +103,8 @@ def transcribe_chunk_sarvam(chunk_path: str) -> str:
     Sarvam sync API only accepts ≤30s audio. We split this chunk into
     25-second pieces, send each separately, and join the transcripts.
     """
-    if not SARVAM_API_KEY:
-        raise RuntimeError("SARVAM_API_KEY is not set in environment / .env")
+    if not _sarvam_api_key():
+        raise TranscriptionError("Sarvam is not configured. Set SARVAM_API_KEY before using Hinglish transcription.")
 
     audio = AudioSegment.from_wav(chunk_path)
     piece_ms = SARVAM_PIECE_SECONDS * 1000
@@ -80,11 +118,14 @@ def transcribe_chunk_sarvam(chunk_path: str) -> str:
         piece.export(piece_path, format="wav")
 
         try:
-            print(f"  → Sarvam piece {i + 1}/{total_pieces} ...")
+            logger.info("Submitting Sarvam audio piece %s of %s", i + 1, total_pieces)
             full_text += _send_to_sarvam(piece_path) + " "
         finally:
             if os.path.exists(piece_path):
-                os.remove(piece_path)
+                try:
+                    os.remove(piece_path)
+                except OSError:
+                    logger.warning("Unable to remove temporary Sarvam audio piece")
 
     return full_text.strip()
 
@@ -108,16 +149,16 @@ def transcribe_all(chunks: list, language: str = "english") -> str:
     full_transcript = "" 
 
     engine = "Sarvam AI" if language.lower() == "hinglish" else "Whisper"
-    print(f"Using {engine} for transcription.")
+    logger.info("Starting transcription with %s", engine)
 
     for i, chunk in enumerate(chunks):  
 
-        print(f"Transcribing chunk {i + 1}/{len(chunks)}...")
+        logger.info("Transcribing audio chunk %s of %s", i + 1, len(chunks))
 
         text = transcribe_chunk(chunk, language=language)  
 
         full_transcript += text + " "  
 
-    print("Transcription complete.")
+    logger.info("Transcription complete")
 
-    return full_transcript.strip()  
+    return full_transcript.strip()
