@@ -72,6 +72,7 @@ It combines Speech-to-Text, AI Summarization, Vector Search, and Retrieval-Augme
 ```text
 VIDEXA/
 ├── core/
+│   ├── exporters/       # Reusable TXT, Markdown, JSON, and PDF exports
 │   ├── extractor.py
 │   ├── transcriber.py
 │   ├── summarizer.py
@@ -165,10 +166,30 @@ http://localhost:8501
 
 * Speaker diarization
 * Meeting action items extraction
-* PDF export
 * Multi-video knowledge base
 * Cloud deployment
 * Team collaboration features
+
+---
+
+## 📦 Export services
+
+Videxa provides frontend-agnostic, in-memory export functions for use by a
+future API or web frontend. They do not import Streamlit or write export files.
+
+```python
+from core.exporters import export_analysis, export_transcript, generate_pdf_report
+
+transcript_txt = export_transcript("Meeting transcript")
+analysis_md = export_analysis({"summary": "...", "action_items": ["..."]})
+analysis_json = export_analysis({"summary": "..."}, format="json")
+report_pdf = generate_pdf_report({"title": "Weekly Sync", "transcript": "..."})
+```
+
+Supported formats are UTF-8 TXT (transcripts), UTF-8 Markdown or JSON
+(analysis), and PDF reports. PDF reports use ReportLab's standard built-in font;
+unsupported glyphs are replaced in the PDF so generation remains reliable. Use
+TXT, Markdown, or JSON when complete Unicode fidelity is required.
 
 ---
 
