@@ -34,8 +34,12 @@ def _collection_name(session_id: str) -> str:
     return f"{COLLECTION_PREFIX}_{safe_id}"
 
 
-def build_vector_store(transcript: str, session_id: str | None = None) -> Chroma:
-    """Build a transcript-specific Chroma collection without touching old data."""
+def build_vector_store(
+    transcript: str,
+    session_id: str | None = None,
+    session_title: str | None = None,
+) -> Chroma:
+    """Upsert transcript chunks with stable IDs into this session's collection."""
     resolved_session_id = session_id or session_id_for_transcript(transcript)
 
     splitter = RecursiveCharacterTextSplitter(
@@ -46,19 +50,22 @@ def build_vector_store(transcript: str, session_id: str | None = None) -> Chroma
     if not chunks:
         raise ValueError("Cannot create a vector store for an empty transcript.")
 
-    docs = [
-        Document(page_content=chunk, metadata={'chunk_index': i, 'session_id': resolved_session_id})
-        for i,chunk in enumerate(chunks)
-    ]
+    docs = []
+    for i, chunk in enumerate(chunks):
+        metadata = {"chunk_index": i, "session_id": resolved_session_id}
+        if session_title:
+            metadata["session_title"] = session_title[:500]
+        docs.append(Document(page_content=chunk, metadata=metadata))
 
     Path(CHROMA_DIR).mkdir(parents=True, exist_ok=True)
     embeddings = get_embeddings()
-    vector_store = Chroma.from_documents(
-        documents= docs,
-        embedding=embeddings,
+    vector_store = Chroma(
         collection_name=_collection_name(resolved_session_id),
-        persist_directory=CHROMA_DIR
+        embedding_function=embeddings,
+        persist_directory=CHROMA_DIR,
     )
+    ids = [f"{resolved_session_id}_{index}" for index in range(len(docs))]
+    vector_store.add_documents(documents=docs, ids=ids)
 
     return vector_store
 

@@ -1,41 +1,5 @@
-from dotenv import load_dotenv
-import uuid
-from utils.audio_processor import cleanup_audio_files, process_input
-from core.transcriber import transcribe_all
-from core.summarizer import summarize, generate_title
-from core.extractor import extract_action_items, extract_key_decisions, extract_questions
-from core.rag_engine import build_rag_chain, ask_question
-
-
-load_dotenv()
-
-
-def run_pipeline(source :str, language :str = "english") -> dict:
-    print("starting AI Video Assistant")
-
-    chunks = process_input(source)
-    try:
-        transcript = transcribe_all(chunks, language)
-        print(f"raw transcription (first 300 characters ) {transcript[:300]}")
-        title = generate_title(transcript)
-        summary = summarize(transcript)
-        action_item = extract_action_items(transcript)
-        decisions = extract_key_decisions(transcript)
-        questions = extract_questions(transcript)
-        session_id = uuid.uuid4().hex
-        rag_chain = build_rag_chain(transcript, session_id=session_id)
-        return {
-            "title": title,
-            "transcript": transcript,
-            "summary": summary,
-            "action_items": action_item,
-            "key_decisions": decisions,
-            "open_questions": questions,
-            "rag_chain": rag_chain,
-            "session_id": session_id,
-        }
-    finally:
-        cleanup_audio_files(chunks)
+from backend.services import run_pipeline
+from core.rag_engine import ask_question
 
 if __name__ == "__main__":
     # CLI entry point

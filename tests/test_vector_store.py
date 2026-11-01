@@ -23,6 +23,10 @@ class FakeChroma:
     def from_documents(cls, **kwargs):
         return cls(**kwargs)
 
+    def add_documents(self, documents, ids):
+        self.kwargs["documents"] = documents
+        self.kwargs["ids"] = ids
+
     def as_retriever(self, **kwargs):
         return kwargs
 
@@ -40,6 +44,13 @@ def test_build_uses_distinct_session_collection_names():
     second = vector_store.build_vector_store("second transcript", session_id="second")
     assert first.kwargs["collection_name"] != second.kwargs["collection_name"]
     assert first.kwargs["documents"][0].metadata["session_id"] == "first"
+
+
+def test_rebuilding_session_uses_same_document_ids():
+    first = vector_store.build_vector_store("same transcript", session_id="retry-session")
+    second = vector_store.build_vector_store("same transcript", session_id="retry-session")
+    assert first.kwargs["collection_name"] == second.kwargs["collection_name"]
+    assert first.kwargs["ids"] == second.kwargs["ids"]
 
 
 def test_load_and_retriever_creation():

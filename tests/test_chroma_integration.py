@@ -35,9 +35,11 @@ def test_real_chroma_persists_isolates_sessions_and_powers_mocked_rag(monkeypatc
 
     session_a = "session-a"
     session_b = "session-b"
-    store_a = vector_store.build_vector_store(
-        "ALPHA_TOKEN belongs only to session A.", session_id=session_a
-    )
+    transcript_a = "ALPHA_TOKEN belongs only to session A."
+    store_a = vector_store.build_vector_store(transcript_a, session_id=session_a)
+    # Re-analysis reuses stable chunk IDs in the existing collection.
+    store_a = vector_store.build_vector_store(transcript_a, session_id=session_a)
+    assert store_a._collection.count() == 1
     store_b = vector_store.build_vector_store(
         "BRAVO_TOKEN belongs only to session B.", session_id=session_b
     )
