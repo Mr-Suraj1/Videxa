@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Trash2, Pencil } from "lucide-react";
 import type { VideoSession } from "@/types";
 import { humanDate, statusLabel } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -27,8 +27,16 @@ type Props = {
 
 export function LibraryCard({ session, selected, onSelect, onOpen }: Props) {
   const deleteSession = useSessionsStore((s) => s.deleteSession);
+  const updateTitle = useSessionsStore((s) => s.updateTitle);
   const addToast = useUiStore((s) => s.addToast);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(session.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
@@ -42,6 +50,33 @@ export function LibraryCard({ session, selected, onSelect, onOpen }: Props) {
     }
   }
 
+  function startEdit(e: React.MouseEvent) {
+    e.stopPropagation();
+    setDraft(session.title);
+    setEditing(true);
+  }
+
+  async function commitEdit() {
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === session.title) {
+      setEditing(false);
+      return;
+    }
+    try {
+      await updateTitle(session.session_id, trimmed);
+      addToast("Title updated", "success");
+    } catch {
+      addToast("Failed to update title", "error");
+      setDraft(session.title);
+    }
+    setEditing(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+    if (e.key === "Escape") { setDraft(session.title); setEditing(false); }
+  }
+
   return (
     <div className={`lib-card${selected ? " lib-card--selected" : ""}`}>
       <label className="lib-card__check" onClick={(e) => e.stopPropagation()}>
@@ -52,17 +87,44 @@ export function LibraryCard({ session, selected, onSelect, onOpen }: Props) {
           aria-label={`Select ${session.title}`}
         />
       </label>
-      <button className="lib-card__body" onClick={onOpen}>
-        <span className="lib-card-title">{session.title}</span>
-        <div className="lib-card__meta">
-          <span className="lib-card__date">{humanDate(session.created_at)}</span>
-          {session.analysis_status && (
-            <Badge variant={statusVariant(session.analysis_status)}>
-              {statusLabel(session.analysis_status)}
-            </Badge>
-          )}
-        </div>
-      </button>
+
+      {editing ? (
+        <input
+          ref={inputRef}
+          className="lib-card__title-input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          maxLength={200}
+          aria-label="Edit session title"
+        />
+      ) : (
+        <button className="lib-card__body" onClick={onOpen}>
+          <span className="lib-card-title">{session.title}</span>
+          <div className="lib-card__meta">
+            <span className="lib-card__date">{humanDate(session.created_at)}</span>
+            {session.analysis_status && (
+              <Badge variant={statusVariant(session.analysis_status)}>
+                {statusLabel(session.analysis_status)}
+              </Badge>
+            )}
+          </div>
+        </button>
+      )}
+
+      {!editing && (
+        <button
+          className="lib-card__edit"
+          onClick={startEdit}
+          aria-label="Rename session"
+          title="Rename"
+        >
+          <Pencil size={12} />
+        </button>
+      )}
+
       <button
         className="lib-card__delete"
         onClick={handleDelete}

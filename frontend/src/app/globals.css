@@ -194,3 +194,30 @@
 .library-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px}
 .library-page__title{margin:0 0 4px;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:500}
 .library-page__sub{margin:0 0 20px;color:var(--muted);font-size:12px}
+
+/* ── P2: Sidebar search, sort, bulk actions ─────────────────────────────── */
+.sidebar__section-actions{display:flex;align-items:center;gap:5px}
+.sidebar__icon-btn{display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:5px;background:transparent;color:#555462;cursor:pointer;padding:0}
+.sidebar__icon-btn:hover{background:#22212a;color:var(--purple)}
+.sidebar__search{position:relative;display:flex;align-items:center;margin:0 0 6px;padding:0 10px}
+.sidebar__search-icon{position:absolute;left:19px;color:#555462;pointer-events:none;flex:none}
+.sidebar__search-input{width:100%;height:30px;padding:0 28px 0 28px;border:1px solid #24232b;border-radius:7px;background:#0f0f15;color:#dad8e2;font-size:10px;outline:none}
+.sidebar__search-input:focus{border-color:#7660a9}
+.sidebar__search-input::placeholder{color:#555462}
+.sidebar__search-input::-webkit-search-cancel-button{display:none}
+.sidebar__search-clear{position:absolute;right:15px;display:grid;place-items:center;width:18px;height:18px;border:0;border-radius:4px;background:transparent;color:#555462;cursor:pointer;padding:0}
+.sidebar__search-clear:hover{color:#dad8e2}
+.sidebar__bulk-bar{display:flex;align-items:center;gap:5px;margin-top:8px;padding:8px 10px;border:1px solid #342f47;border-radius:8px;background:#17141d}
+.sidebar__bulk-count{flex:1;font-size:9px;color:#a99cd5;font-family:'DM Mono',monospace}
+.sidebar__bulk-clear{display:flex;align-items:center;gap:3px;border:0;background:transparent;color:#7a7384;font-size:9px;cursor:pointer;padding:0}
+.sidebar__bulk-clear:hover{color:#dad8e2}
+.sidebar__bulk-delete{display:flex;align-items:center;gap:4px;padding:5px 8px;border:1px solid #703e48;border-radius:6px;background:#301c22;color:#f0aaaa;font-size:9px;cursor:pointer}
+.sidebar__bulk-delete:hover:not(:disabled){border-color:#9e4f5a}
+.sidebar__bulk-delete:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── P2: LibraryCard inline edit + rename button ─────────────────────────── */
+.lib-card__edit{flex:none;display:grid;place-items:center;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:#555462;cursor:pointer;opacity:0;transition:.15s;padding:0}
+.lib-card:hover .lib-card__edit{opacity:1}
+.lib-card__edit:hover{background:#221d35;color:#c4aeff}
+.lib-card__title-input{flex:1;min-width:0;height:28px;padding:0 7px;border:1px solid #7660a9;border-radius:5px;background:#0f0f15;color:#dad8e2;font-size:10px;outline:none}
+.lib-card__title-input:focus{box-shadow:0 0 0 2px #8f69ee20}

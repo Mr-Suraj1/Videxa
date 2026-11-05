@@ -121,6 +121,18 @@ def save_analysis(session_id: str, title: str, summary: str, action_items: str,
             raise KeyError("A saved transcript was not found for this session.")
 
 
+def update_session_title(session_id: str, title: str) -> bool:
+    """Update the display title of a session. Returns True if a row was updated."""
+    _validate_session_id(session_id)
+    normalized = (title or "Untitled video").strip()[:500] or "Untitled video"
+    with _connect() as connection:
+        cursor = connection.execute(
+            "UPDATE video_sessions SET title = ? WHERE session_id = ?",
+            (normalized, session_id),
+        )
+    return cursor.rowcount > 0
+
+
 def delete_session(session_id: str) -> bool:
     """Remove a session record. Returns True if a row was deleted."""
     _validate_session_id(session_id)

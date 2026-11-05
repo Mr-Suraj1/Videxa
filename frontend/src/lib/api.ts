@@ -140,6 +140,14 @@ export async function exportPdf(payload: {
   return res.blob();
 }
 
+export async function updateSessionTitle(id: string, title: string): Promise<void> {
+  await apiFetch(`/sessions/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+}
+
 export async function deleteSession(id: string): Promise<void> {
   await apiFetch(`/sessions/${encodeURIComponent(id)}`, { method: "DELETE" });
 }

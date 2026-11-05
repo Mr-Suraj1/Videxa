@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from core.pipeline import analyze_saved_transcript, run_pipeline as run_core_pipeline
 from core.rag_engine import ask_question, build_rag_chain, load_multi_session_rag_chain, load_rag_chain
-from core.session_catalog import get_session, delete_session as catalog_delete_session
+from core.session_catalog import get_session, delete_session as catalog_delete_session, update_session_title as catalog_update_title
 from core.vector_store import delete_vector_store
 from core.vector_store import VectorStoreUnavailableError
 
@@ -57,6 +57,11 @@ def delete_session(session_id: str) -> bool:
     if deleted:
         delete_vector_store(session_id)
     return deleted
+
+
+def update_session_title(session_id: str, title: str) -> bool:
+    """Update the display title for a session."""
+    return catalog_update_title(session_id, title)
 
 
 def session_status(session_id: str) -> dict[str, Any] | None:

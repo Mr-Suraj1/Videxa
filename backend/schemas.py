@@ -130,6 +130,19 @@ class ExportRequest(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
+class PatchSessionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=500)
+
+    @field_validator("title")
+    @classmethod
+    def title_must_not_be_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("title must not be blank")
+        return value.strip()
+
+
 class TranscriptExportRequest(ExportRequest):
     transcript: str = Field(min_length=1, max_length=2_000_000)
 
