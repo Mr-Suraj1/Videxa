@@ -100,7 +100,7 @@ export function Sidebar() {
 
       <aside className={`sidebar${sidebarOpen ? " sidebar--open" : ""}`}>
         <div className="sidebar__header">
-          <Link href="/" className="sidebar__brand" onClick={() => setSidebarOpen(false)}>
+          <Link href="/app" className="sidebar__brand" onClick={() => setSidebarOpen(false)}>
             Videxa
           </Link>
         </div>
