@@ -62,6 +62,10 @@ export default function HomePage() {
   }, [retryAnalysis, selectedSession, addToast]);
 
   const selectedIdArray = Array.from(selectedIds);
+  // When no checkboxes are ticked but a session is open, chat against that session
+  const chatIds = selectedIdArray.length > 0
+    ? selectedIdArray
+    : selectedSession ? [selectedSession.session_id] : [];
 
   return (
     <div className="app-shell">
@@ -135,11 +139,11 @@ export default function HomePage() {
           )}
 
           {/* Chat */}
-          {(selectedIdArray.length > 0 || selectedSession) && (
+          {chatIds.length > 0 && (
             <div style={{ marginTop: 16 }}>
               <ChatPanel
                 sessionId={selectedSession?.session_id ?? null}
-                sessionIds={selectedIdArray}
+                sessionIds={chatIds}
               />
             </div>
           )}
