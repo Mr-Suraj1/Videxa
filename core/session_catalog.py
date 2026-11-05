@@ -121,6 +121,16 @@ def save_analysis(session_id: str, title: str, summary: str, action_items: str,
             raise KeyError("A saved transcript was not found for this session.")
 
 
+def delete_session(session_id: str) -> bool:
+    """Remove a session record. Returns True if a row was deleted."""
+    _validate_session_id(session_id)
+    with _connect() as connection:
+        cursor = connection.execute(
+            "DELETE FROM video_sessions WHERE session_id = ?", (session_id,)
+        )
+    return cursor.rowcount > 0
+
+
 def list_sessions(limit: int = 500) -> list[dict[str, str]]:
     """Return recently processed session labels for the local user interface."""
     if not 1 <= limit <= 5000:

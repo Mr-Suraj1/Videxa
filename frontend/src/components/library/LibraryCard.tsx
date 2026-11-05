@@ -1,7 +1,11 @@
 "use client";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { VideoSession } from "@/types";
 import { humanDate, statusLabel } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { useSessionsStore } from "@/store/sessions";
+import { useUiStore } from "@/store/ui";
 
 type BadgeVariant = "green" | "amber" | "red" | "purple" | "cyan" | "default";
 
@@ -22,9 +26,25 @@ type Props = {
 };
 
 export function LibraryCard({ session, selected, onSelect, onOpen }: Props) {
+  const deleteSession = useSessionsStore((s) => s.deleteSession);
+  const addToast = useUiStore((s) => s.addToast);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    setDeleting(true);
+    try {
+      await deleteSession(session.session_id);
+      addToast("Session deleted", "success");
+    } catch {
+      addToast("Failed to delete session", "error");
+      setDeleting(false);
+    }
+  }
+
   return (
     <div className={`lib-card${selected ? " lib-card--selected" : ""}`}>
-      <label className="lib-card__check">
+      <label className="lib-card__check" onClick={(e) => e.stopPropagation()}>
         <input
           type="checkbox"
           checked={selected}
@@ -42,6 +62,15 @@ export function LibraryCard({ session, selected, onSelect, onOpen }: Props) {
             </Badge>
           )}
         </div>
+      </button>
+      <button
+        className="lib-card__delete"
+        onClick={handleDelete}
+        disabled={deleting}
+        aria-label="Delete session"
+        title="Delete session"
+      >
+        <Trash2 size={13} />
       </button>
     </div>
   );

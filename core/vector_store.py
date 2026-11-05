@@ -71,6 +71,16 @@ def build_vector_store(
 
 
 
+def delete_vector_store(session_id: str) -> None:
+    """Delete the ChromaDB collection for a session, silently if absent."""
+    try:
+        import chromadb
+        client = chromadb.PersistentClient(path=CHROMA_DIR)
+        client.delete_collection(_collection_name(session_id))
+    except Exception:
+        pass  # collection may not exist — that's fine
+
+
 def load_vector_store(session_id: str) -> Chroma:
     """Load an existing non-empty, transcript-specific collection."""
     embeddings = get_embeddings()

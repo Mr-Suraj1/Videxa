@@ -23,6 +23,7 @@ type SessionsState = {
   toggleSession: (id: string) => void;
   clearSelection: () => void;
   openSession: (session: VideoSession) => Promise<void>;
+  deleteSession: (id: string) => Promise<void>;
   setAnalysis: (a: Analysis | null) => void;
   setSavedTranscript: (t: string | null) => void;
 };
@@ -115,6 +116,16 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
     set({ selectedSession: session as SessionStatus, analysis: null, savedTranscript: null });
     await get().loadSession(session.session_id);
     await get().loadSessionContent(session.session_id);
+  },
+
+  deleteSession: async (id) => {
+    await api.deleteSession(id);
+    set((s) => ({
+      sessions: s.sessions.filter((x) => x.session_id !== id),
+      selectedIds: (() => { const next = new Set(s.selectedIds); next.delete(id); return next; })(),
+      selectedSession: s.selectedSession?.session_id === id ? null : s.selectedSession,
+      analysis: s.analysis?.session_id === id ? null : s.analysis,
+    }));
   },
 
   setAnalysis: (a) => set({ analysis: a }),

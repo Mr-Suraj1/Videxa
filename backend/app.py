@@ -52,7 +52,7 @@ app.add_middleware(
         for origin in os.getenv("VIDEXA_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
         if origin.strip()
     ],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type"],
 )
 
@@ -105,6 +105,16 @@ def session_content(session_id: str) -> SessionContentResponse:
     if result is None:
         raise _http_error(404, "Saved transcript content was not found for this session.")
     return SessionContentResponse(**result)
+
+
+@app.delete("/sessions/{session_id}", status_code=204)
+def delete_session(session_id: str) -> None:
+    try:
+        found = services.delete_session(session_id)
+    except ValueError as exc:
+        raise _http_error(400, str(exc)) from exc
+    if not found:
+        raise _http_error(404, "The requested session was not found.")
 
 
 @app.post("/sessions/{session_id}/analysis/retry", response_model=ProcessingResponse)

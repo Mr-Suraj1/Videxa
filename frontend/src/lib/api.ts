@@ -140,6 +140,10 @@ export async function exportPdf(payload: {
   return res.blob();
 }
 
+export async function deleteSession(id: string): Promise<void> {
+  await apiFetch(`/sessions/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

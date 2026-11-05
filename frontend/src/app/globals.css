@@ -66,6 +66,14 @@
 .lib-card-title{display:block;overflow:hidden;color:#c4c2ce;font-size:10px;font-weight:500;text-overflow:ellipsis;white-space:nowrap}
 .lib-card__meta{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}
 .lib-card__date{color:#747383;font-size:9px}
+.lib-card__delete{flex:none;display:grid;place-items:center;width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:#555462;cursor:pointer;opacity:0;transition:.15s}
+.lib-card:hover .lib-card__delete{opacity:1}
+.lib-card__delete:hover{background:#3a1c22;color:#f0aaaa}
+.lib-card__delete:disabled{opacity:.4;cursor:not-allowed}
+.sidebar__section-row{display:flex;align-items:center;justify-content:space-between;padding:0 10px 8px}
+.sidebar__section-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.3px;color:#777688;padding:0}
+.sidebar__clear-btn{display:flex;align-items:center;gap:4px;border:0;background:transparent;color:#a0607a;font-size:9px;cursor:pointer;white-space:nowrap}
+.sidebar__clear-btn:hover{color:#f0aaaa}
 
 /* ── Skeleton loader ───────────────────────────────────────────────────── */
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}

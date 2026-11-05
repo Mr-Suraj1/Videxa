@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 
 from core.pipeline import analyze_saved_transcript, run_pipeline as run_core_pipeline
 from core.rag_engine import ask_question, build_rag_chain, load_multi_session_rag_chain, load_rag_chain
-from core.session_catalog import get_session
+from core.session_catalog import get_session, delete_session as catalog_delete_session
+from core.vector_store import delete_vector_store
 from core.vector_store import VectorStoreUnavailableError
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,14 @@ def answer_question(session_id: str, question: str) -> str:
 def retry_analysis(session_id: str) -> dict[str, Any]:
     """Re-run analysis on the persisted transcript for one existing session."""
     return analyze_saved_transcript(session_id)
+
+
+def delete_session(session_id: str) -> bool:
+    """Remove a session from the catalog and delete its vector store."""
+    deleted = catalog_delete_session(session_id)
+    if deleted:
+        delete_vector_store(session_id)
+    return deleted
 
 
 def session_status(session_id: str) -> dict[str, Any] | None:
