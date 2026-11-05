@@ -17,7 +17,7 @@ def export_analysis(
     """Export current Videxa analysis fields as UTF-8 Markdown or JSON bytes.
 
     Runtime-only values such as a RAG chain and session identifier are never
-    included, even when this function receives the full Streamlit result mapping.
+    included, even when this function receives the full pipeline result mapping.
     """
     require_report_mapping(analysis)
     if format == "json":

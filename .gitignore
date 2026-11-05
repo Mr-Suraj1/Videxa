@@ -4,6 +4,21 @@ __pycache__/
 *.pyc
 .env
 downloades/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/next-env.d.ts.tmp
+vector_db/sessions.sqlite3
+vector_db/chroma.sqlite3
+vector_db/*/
+
+# Test / scratch media files
+*.webm
+*.m4a
+*.mp4
+*.mp3
+*.wav
 
 *.log
 .DS_Store

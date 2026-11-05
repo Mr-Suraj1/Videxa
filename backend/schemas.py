@@ -49,6 +49,13 @@ class AnalysisResponse(BaseModel):
     open_questions: str
 
 
+class SessionContentResponse(BaseModel):
+    session_id: str
+    title: str
+    transcript: str
+    analysis: AnalysisResponse | None = None
+
+
 class ProcessingResponse(BaseModel):
     status: Literal["completed"]
     session_id: str

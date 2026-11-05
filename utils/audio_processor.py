@@ -122,6 +122,11 @@ def download_youtube_audio(url: str, work_dir: Path) -> str:
         "quiet": True,
         "noplaylist": True,
     }
+    # yt-dlp no longer enables Node automatically. Use it when available so
+    # YouTube extraction can run the supported JavaScript challenge code.
+    node_path = shutil.which("node")
+    if node_path:
+        options["js_runtimes"] = {"node": {"path": node_path}}
     try:
         with yt_dlp.YoutubeDL(options) as ydl:
             ydl.extract_info(validated_url, download=True)

@@ -1,11 +1,12 @@
 """API boundary tests with external Videxa providers replaced by test doubles."""
 
 from fastapi.testclient import TestClient
+import pytest
 
 from backend.app import app
 from backend import services
 from core.pipeline import AnalysisFailure
-from core.mistral_retry import MistralProviderError
+from core.gemini_retry import GeminiProviderError
 
 
 client = TestClient(app)
@@ -18,6 +19,7 @@ def test_health_and_openapi_are_available():
     assert "/chat" in openapi["paths"]
     assert "/exports/pdf" in openapi["paths"]
     assert "/sessions/{session_id}/analysis/retry" in openapi["paths"]
+    assert "/sessions/{session_id}/content" in openapi["paths"]
 
 
 def test_process_validates_request():
@@ -78,12 +80,12 @@ def test_process_hides_unexpected_errors(monkeypatch):
 
 
 def test_process_preserves_session_id_when_analysis_fails(monkeypatch):
-    cause = MistralProviderError("Mistral is temporarily rate limited.", category="rate_limit", status_code=429)
+    cause = GeminiProviderError("Gemini API is temporarily rate limited. Wait for the limit to reset, then retry.", category="rate_limit", status_code=429)
     monkeypatch.setattr(services, "run_pipeline", lambda *_: (_ for _ in ()).throw(AnalysisFailure("saved-session", cause)))
     response = client.post("/process", json={"source": "https://youtu.be/abc123"})
     assert response.status_code == 429
     assert response.json() == {
-        "detail": "Mistral is temporarily rate limited.",
+        "detail": "Gemini API is temporarily rate limited. Wait for the limit to reset, then retry.",
         "session_id": "saved-session",
         "processing_status": "completed",
         "analysis_status": "rate_limited",
@@ -100,6 +102,62 @@ def test_retry_analysis_route_uses_existing_session_id(monkeypatch):
     assert response.status_code == 200
     assert response.json()["session_id"] == "recover-me"
     assert calls == ["recover-me"]
+
+
+@pytest.mark.parametrize(
+    ("analysis_status", "has_analysis"),
+    [("completed", True), ("pending", False), ("failed", False)],
+)
+def test_session_content_returns_saved_data_for_session_states(monkeypatch, analysis_status, has_analysis):
+    session = {
+        "session_id": "recover-me",
+        "title": "Planning",
+        "transcript": "Saved transcript.",
+        "analysis_status": analysis_status,
+        "summary": "Summary" if has_analysis else None,
+        "action_items": "Actions" if has_analysis else None,
+        "key_decisions": "Decisions" if has_analysis else None,
+        "open_questions": "Questions" if has_analysis else None,
+    }
+    monkeypatch.setattr(services, "get_session", lambda _session_id: session)
+    response = client.get("/sessions/recover-me/content")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["session_id"] == "recover-me"
+    assert payload["transcript"] == "Saved transcript."
+    assert (payload["analysis"] is not None) is has_analysis
+
+
+def test_session_content_service_includes_analysis_only_when_completed(monkeypatch):
+    monkeypatch.setattr(services, "get_session", lambda session_id: {
+        "session_id": session_id,
+        "title": "Planning",
+        "transcript": "Saved transcript.",
+        "analysis_status": "completed",
+        "summary": "Summary",
+        "action_items": "Actions",
+        "key_decisions": "Decisions",
+        "open_questions": "Questions",
+    })
+    assert services.session_content("recover-me") == {
+        "session_id": "recover-me",
+        "title": "Planning",
+        "transcript": "Saved transcript.",
+        "analysis": {
+            "title": "Planning",
+            "summary": "Summary",
+            "action_items": "Actions",
+            "key_decisions": "Decisions",
+            "open_questions": "Questions",
+        },
+    }
+
+
+def test_session_content_returns_not_found_without_saved_transcript(monkeypatch):
+    monkeypatch.setattr(services, "get_session", lambda _session_id: None)
+    response = client.get("/sessions/old-session/content")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Saved transcript content was not found for this session."}
 
 
 def test_chat_uses_existing_rag_service(monkeypatch):

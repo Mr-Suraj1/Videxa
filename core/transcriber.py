@@ -53,7 +53,8 @@ def transcribe_chunk_whisper(chunk_path: str) -> str:
     model = load_model()  
 
     try:
-        result = model.transcribe(chunk_path, task="transcribe")
+        # Videxa loads Whisper on CPU, where FP16 is unsupported.
+        result = model.transcribe(chunk_path, task="transcribe", fp16=False)
         return result["text"]
     except Exception as exc:
         logger.exception("Whisper transcription failed")

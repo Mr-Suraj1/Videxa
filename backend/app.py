@@ -26,12 +26,13 @@ from backend.schemas import (
     ProcessingRequest,
     ProcessingResponse,
     SessionListResponse,
+    SessionContentResponse,
     SessionStatusResponse,
     TranscriptExportRequest,
 )
 from core.transcriber import TranscriptionError
 from core.pipeline import AnalysisFailure
-from core.mistral_retry import MistralProviderError
+from core.gemini_retry import GeminiProviderError
 from core.session_catalog import list_sessions
 from core.vector_store import VectorStoreUnavailableError
 from utils.audio_processor import InputValidationError, MediaProcessingError, SUPPORTED_MEDIA_EXTENSIONS
@@ -93,6 +94,17 @@ def session_status(session_id: str) -> SessionStatusResponse:
     if result is None:
         raise _http_error(404, "The requested session was not found.")
     return SessionStatusResponse(**result)
+
+
+@app.get("/sessions/{session_id}/content", response_model=SessionContentResponse)
+def session_content(session_id: str) -> SessionContentResponse:
+    try:
+        result = services.session_content(session_id)
+    except ValueError as exc:
+        raise _http_error(400, str(exc)) from exc
+    if result is None:
+        raise _http_error(404, "Saved transcript content was not found for this session.")
+    return SessionContentResponse(**result)
 
 
 @app.post("/sessions/{session_id}/analysis/retry", response_model=ProcessingResponse)
@@ -207,7 +219,7 @@ def _analysis_failure_response(exc: AnalysisFailure) -> JSONResponse:
         analysis_status = "rate_limited"
     elif isinstance(cause, httpx.HTTPStatusError):
         status_code = 503 if cause.response.status_code in {401, 403} else 502
-        detail = "Mistral rejected its credentials. Check the backend MISTRAL_API_KEY configuration." if status_code == 503 else "Mistral analysis failed. The saved transcript can be analyzed again later."
+        detail = "Gemini rejected the credentials. Check the backend GOOGLE_API_KEY configuration." if status_code == 503 else "Analysis failed due to a provider error. The saved transcript can be analyzed again later."
         analysis_status = "failed"
     else:
         status_code = 502
@@ -231,7 +243,7 @@ def chat(request: ChatRequest) -> ChatResponse:
         raise _http_error(404, str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         raise _provider_http_error(exc) from exc
-    except MistralProviderError as exc:
+    except GeminiProviderError as exc:
         raise _http_error(exc.status_code or 429, str(exc)) from exc
     except Exception as exc:
         logger.exception("Videxa RAG request failed")
@@ -249,7 +261,7 @@ def chat_multiple(request: MultiChatRequest) -> MultiChatResponse:
         raise _http_error(404, str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         raise _provider_http_error(exc) from exc
-    except MistralProviderError as exc:
+    except GeminiProviderError as exc:
         raise _http_error(exc.status_code or 429, str(exc)) from exc
     except Exception as exc:
         logger.exception("Videxa multi-video RAG request failed")
@@ -314,19 +326,19 @@ def _provider_http_error(exc: httpx.HTTPStatusError):
     if status == 402:
         return _http_error(
             402,
-            "Mistral usage quota or billing limit was reached. Check the workspace usage and billing limits before retrying.",
+            "Gemini API billing or quota limit was reached. Check the Google Cloud Console quota settings before retrying.",
         )
     if status == 429:
         return _http_error(
             429,
-            "The Mistral API rate limit has been reached. Wait for the provider limit to reset, then retry.",
+            "The Gemini API rate limit has been reached. Wait for the provider limit to reset, then retry.",
         )
     if status in {401, 403}:
         return _http_error(
             503,
-            "The Mistral API rejected its credentials. Check MISTRAL_API_KEY in the backend environment.",
+            "The Gemini API rejected its credentials. Check GOOGLE_API_KEY in the backend environment.",
         )
     return _http_error(
         502,
-        "The Mistral API is temporarily unavailable. Please try again later.",
+        "The Gemini API is temporarily unavailable. Please try again later.",
     )

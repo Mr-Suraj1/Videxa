@@ -1,207 +1,92 @@
-# 🎥 Videxa – AI Video Assistant with RAG
+# Videxa
 
-Videxa is an AI-powered Video Intelligence platform that transforms YouTube videos, meetings, lectures, podcasts, and local media files into actionable insights.
+Videxa turns long-form video and audio into searchable transcripts, concise
+briefs, action items, and grounded answers. The application uses a Next.js web
+frontend with a FastAPI backend.
 
-It combines Speech-to-Text, AI Summarization, Vector Search, and Retrieval-Augmented Generation (RAG) to help users understand and interact with video content efficiently.
+## Features
 
-## ✨ Features
+- Analyze YouTube videos or upload local audio/video.
+- Transcribe English or Hinglish recordings.
+- Generate a summary, title, action items, decisions, and open questions.
+- Ask questions against one video or compare up to 20 videos.
+- Export transcripts and analysis as TXT, Markdown, or PDF.
+- Browse previously processed sessions from the local session catalog.
 
-### 🎙️ Audio & Video Processing
+## Stack
 
-* Process YouTube URLs directly
-* Upload and analyze local audio/video files
-* Automatic audio extraction and conversion
-* Long audio chunking for efficient transcription
+- Frontend: Next.js App Router, React, TypeScript
+- Backend: FastAPI, Python
+- Transcription and analysis: Whisper, Sarvam (Hinglish), Gemini
+- Retrieval: LangChain, Sentence Transformers, ChromaDB
 
-### 📝 AI Transcription
-
-* Powered by OpenAI Whisper
-* Multi-language support
-* Accurate speech-to-text conversion
-* Handles long recordings automatically
-
-### 📄 Smart Summarization
-
-* Generate concise meeting summaries
-* Extract key insights and highlights
-* Create AI-generated titles
-* Reduce hours of content into readable notes
-
-### 🔍 RAG-Powered Chat
-
-* Ask questions about the video content
-* Context-aware answers using vector search
-* ChromaDB-powered document retrieval
-* Conversational interaction with transcripts
-
-### 🎨 Modern UI
-
-* Built with Streamlit
-* Dark futuristic interface
-* Interactive workflow
-* Real-time processing feedback
-
----
-
-## 🏗️ Tech Stack
-
-### AI & LLM
-
-* OpenAI Whisper
-* LangChain
-* Sentence Transformers
-
-### Vector Database
-
-* ChromaDB
+## Run locally
 
 ### Backend
 
-* Python
-* yt-dlp
-* pydub
-
-### Frontend
-
-* Streamlit
-
----
-
-## 📂 Project Structure
-
-```text
-VIDEXA/
-├── core/
-│   ├── exporters/       # Reusable TXT, Markdown, JSON, and PDF exports
-│   ├── extractor.py
-│   ├── transcriber.py
-│   ├── summarizer.py
-│   ├── vector_store.py
-│   └── rag_engine.py
-│
-├── utils/
-│   └── audio_processor.py
-│
-├── app.py
-├── main.py
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
-
----
-
-## 🚀 Installation
-
-### Clone Repository
-
-```bash
-git clone https://github.com/YOUR_USERNAME/videxa.git
-cd videxa
-```
-
-### Create Virtual Environment
-
-```bash
-python -m venv .venv
-```
-
-### Activate Environment
-
-#### Windows
-
-```bash
-.venv\Scripts\activate
-```
-
-### Install Dependencies
-
-```bash
-pip install -r Requirements.txt
-```
-
----
-
-## ⚙️ Setup
-
-Create a `.env` file in the root directory:
+Install Python dependencies and configure `.env` (copy from `.env.example`):
 
 ```env
-MISTRAL_API_KEY=your_api_key_here
-# SARVAM_API_KEY=your_api_key_here  # only needed for Hinglish transcription
+GOOGLE_API_KEY=your_google_api_key_here
+GEMINI_MODEL=gemini-3.7-flash
+SARVAM_API_KEY=your_sarvam_api_key_here
 ```
 
----
+`GOOGLE_API_KEY` is required. `gemini-3.7-flash` has a free tier; verify current
+rate limits in Google AI Studio before relying on them. Production workloads
+require a paid Google Cloud project with billing enabled and quota configured
+accordingly.
 
-## ▶️ Run Application
+Install FFmpeg and make sure `ffmpeg` is available on `PATH`. It is required
+to download, convert, and chunk media.
 
-```bash
-python -m streamlit run app.py
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r Requirements.txt
+uvicorn backend.app:app --reload
 ```
 
-Application will be available at:
+The API runs at `http://127.0.0.1:8000`; interactive API documentation is at
+`http://127.0.0.1:8000/docs`.
+
+### Next.js frontend
+
+In another terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. To use a different backend address, set
+`NEXT_PUBLIC_API_BASE_URL` in `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+
+The backend allows the local Next.js development origins by default. Configure
+`VIDEXA_CORS_ORIGINS` as a comma-separated list when using another origin.
+
+## API endpoints
+
+- `GET /health`, `GET /sessions`
+- `POST /process` for a YouTube URL
+- `POST /process/upload` for a local media upload
+- `POST /chat` and `POST /chat/multi`
+- `POST /exports/transcript`, `/exports/analysis`, `/exports/pdf`
+
+Session titles and IDs are stored in `vector_db/sessions.sqlite3`. Transcript
+vectors are kept in Chroma collections under `vector_db/`.
+
+## Project layout
 
 ```text
-http://localhost:8501
+frontend/       Next.js application
+backend/        FastAPI routes and request/response schemas
+core/           Processing, RAG, session catalog, and export services
+utils/          Media download, conversion, and chunking
+tests/          Backend test suite
 ```
-
----
-
-## 🔄 Workflow
-
-1. Paste a YouTube URL or provide a local file path.
-2. Select the desired language.
-3. Click **Analyse**.
-4. Videxa will:
-
-   * Extract audio
-   * Transcribe speech
-   * Generate summaries
-   * Build vector embeddings
-   * Enable RAG chat
-
----
-
-## 🎯 Future Improvements
-
-* Speaker diarization
-* Meeting action items extraction
-* Multi-video knowledge base
-* Cloud deployment
-* Team collaboration features
-
----
-
-## 📦 Export services
-
-Videxa provides frontend-agnostic, in-memory export functions for use by a
-future API or web frontend. They do not import Streamlit or write export files.
-
-```python
-from core.exporters import export_analysis, export_transcript, generate_pdf_report
-
-transcript_txt = export_transcript("Meeting transcript")
-analysis_md = export_analysis({"summary": "...", "action_items": ["..."]})
-analysis_json = export_analysis({"summary": "..."}, format="json")
-report_pdf = generate_pdf_report({"title": "Weekly Sync", "transcript": "..."})
-```
-
-Supported formats are UTF-8 TXT (transcripts), UTF-8 Markdown or JSON
-(analysis), and PDF reports. PDF reports use ReportLab's standard built-in font;
-unsupported glyphs are replaced in the PDF so generation remains reliable. Use
-TXT, Markdown, or JSON when complete Unicode fidelity is required.
-
----
-
-## 👨‍💻 Author
-
-**Suraj Kumar Ray**
-
-B.Tech Information Technology
-AI & Full Stack Developer
-
----
-
-## 📜 License
-
-This project is licensed under the MIT License.

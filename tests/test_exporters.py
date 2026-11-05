@@ -66,18 +66,3 @@ def test_pdf_report_is_valid_and_contains_basic_content():
 ])
 def test_pdf_handles_missing_long_and_unicode_content(payload):
     assert generate_pdf_report(payload).startswith(b"%PDF-")
-
-
-def test_export_modules_do_not_depend_on_streamlit():
-    import ast
-    from pathlib import Path
-
-    exporters_dir = Path(__file__).parents[1] / "core" / "exporters"
-    imported_modules = []
-    for path in exporters_dir.glob("*.py"):
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
-            if isinstance(node, ast.Import):
-                imported_modules.extend(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom) and node.module:
-                imported_modules.append(node.module)
-    assert not any(module == "streamlit" or module.startswith("streamlit.") for module in imported_modules)
