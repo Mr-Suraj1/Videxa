@@ -19,10 +19,18 @@ export function Sidebar() {
   );
 
   const clearFailed = useCallback(async () => {
+    let cleared = 0;
     for (const s of failedSessions) {
-      try { await deleteSession(s.session_id); } catch { /* skip */ }
+      try {
+        await deleteSession(s.session_id);
+        cleared++;
+      } catch { /* skip */ }
     }
-    addToast(`Cleared ${failedSessions.length} session${failedSessions.length !== 1 ? "s" : ""}`, "success");
+    if (cleared > 0) {
+      addToast(`Cleared ${cleared} session${cleared !== 1 ? "s" : ""}`, "success");
+    } else {
+      addToast("Delete failed — restart the backend server", "error");
+    }
   }, [failedSessions, deleteSession, addToast]);
 
   useEffect(() => {
