@@ -6,12 +6,22 @@ export default function LandingPage() {
       {/* ── Nav ─────────────────────────────────────────────── */}
       <nav className="lp-nav">
         <div className="lp-nav__inner">
-          <span className="lp-nav__brand">Videxa</span>
-          <div className="lp-nav__right">
-            <Link href="/app" className="lp-nav__cta">
-              Launch App
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div className="lp-nav__left">
+            <Link href="/" className="lp-nav__brand">
+              <span className="lp-nav__brand-icon" aria-hidden="true">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              </span>
+              VIDEXA
             </Link>
+            <div className="lp-nav__links">
+              <a href="#features" className="lp-nav__link">Features</a>
+              <a href="#how-it-works" className="lp-nav__link">How It Works</a>
+              <a href="#use-cases" className="lp-nav__link">Use Cases</a>
+            </div>
+          </div>
+          <div className="lp-nav__right">
+            <Link href="/app" className="lp-nav__signin">Sign In</Link>
+            <Link href="/app" className="lp-nav__cta">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -20,59 +30,124 @@ export default function LandingPage() {
       <section className="lp-hero">
         <div className="lp-glow lp-glow--purple" aria-hidden="true" />
         <div className="lp-glow lp-glow--cyan" aria-hidden="true" />
+        <div className="lp-glow lp-glow--pink" aria-hidden="true" />
         <div className="lp-hero__inner">
           <div className="lp-badge">
-            <span className="lp-badge__dot" />
-            AI-Powered Meeting Intelligence
-          </div>
-          <h1 className="lp-h1">
-            Your meetings,<br />
-            <span className="lp-h1__accent">decoded.</span>
-          </h1>
-          <p className="lp-hero__sub">
-            Paste a YouTube link or upload a recording. Get accurate transcripts,
-            AI-generated summaries, action items, and chat with your content — in seconds.
-          </p>
-          <div className="lp-hero__actions">
-            <Link href="/app" className="lp-btn-primary">
-              Start analyzing free
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </Link>
+            <span className="lp-badge__star">✦</span>
+            AI-POWERED VIDEO INTELLIGENCE
+            <span className="lp-badge__star">✦</span>
           </div>
 
-          {/* Mock input card */}
-          <div className="lp-mockup">
-            <div className="lp-mockup__bar">
-              <div className="lp-mockup__dots">
+          <h1 className="lp-h1">
+            Turn Every Video Into<br />
+            <span className="lp-h1__accent">Actionable Knowledge.</span>
+          </h1>
+
+          <p className="lp-hero__sub">
+            Stop watching hours of footage to locate what matters. Videxa synthesizes
+            raw multi-hour streams into frame-indexed transcripts, structured summaries,
+            and millisecond-accurate AI dialogue.
+          </p>
+
+          <div className="lp-hero__actions">
+            <Link href="/app" className="lp-btn-primary">
+              Start Analyzing — Free
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </Link>
+            <a href="#how-it-works" className="lp-btn-secondary">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              Explore How It Works
+            </a>
+          </div>
+
+          <div className="lp-hero__checks">
+            <span className="lp-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#68d6ac" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>Zero friction input</span>
+            <span className="lp-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#68d6ac" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>YouTube &amp; 4K ProRes support</span>
+            <span className="lp-check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#68d6ac" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>Multi-modal RAG with exact citations</span>
+          </div>
+
+          {/* Dashboard Mockup */}
+          <div className="lp-dashboard">
+            <div className="lp-dashboard__titlebar">
+              <div className="lp-dashboard__dots">
                 <span /><span /><span />
               </div>
-              <span className="lp-mockup__title">Videxa — Analyze a video</span>
+              <div className="lp-dashboard__url">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                app.videxa.ai / workspace
+              </div>
             </div>
-            <div className="lp-mockup__body">
-              <div className="lp-mockup__tabs">
-                <span className="lp-mockup__tab lp-mockup__tab--active">YouTube URL</span>
-                <span className="lp-mockup__tab">Upload file</span>
+            <div className="lp-dashboard__body">
+              {/* Sidebar */}
+              <div className="lp-db-sidebar">
+                <div className="lp-db-brand">
+                  <span className="lp-db-brand-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></span>
+                  VIDEXA
+                </div>
+                <div className="lp-db-section">LIBRARY</div>
+                {[
+                  { label: "Introduction to Multimodal AI", status: "done" },
+                  { label: "Q4 Strategy Review Call", status: "done" },
+                  { label: "LLM Latency Benchmarks", status: "proc" },
+                  { label: "Standard Q3/Q4 Review", status: "done" },
+                ].map((item, i) => (
+                  <div key={i} className={`lp-db-item${i === 0 ? " lp-db-item--active" : ""}`}>
+                    <div className={`lp-db-dot lp-db-dot--${item.status}`} />
+                    <span>{item.label}</span>
+                  </div>
+                ))}
               </div>
-              <div className="lp-mockup__input">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#de5555" strokeWidth="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.95C5.12 20 12 20 12 20s6.88 0 8.59-.47a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#de5555" stroke="none"/></svg>
-                <span className="lp-mockup__url">https://youtube.com/watch?v=dQw4w9WgXcQ</span>
+
+              {/* Main content */}
+              <div className="lp-db-main">
+                <div className="lp-db-header">
+                  <div>
+                    <div className="lp-db-eyebrow">SESSION ANALYSIS</div>
+                    <div className="lp-db-title">Introduction to Multimodal AI &amp; High-Dim Vector Spaces</div>
+                  </div>
+                  <div className="lp-db-actions">
+                    <span className="lp-db-btn">PDF REPORT</span>
+                    <span className="lp-db-btn lp-db-btn--accent">SHOW GRAPH</span>
+                  </div>
+                </div>
+
+                <div className="lp-db-waveform">
+                  {Array.from({ length: 32 }).map((_, i) => (
+                    <span key={i} className="lp-db-wave-bar" style={{ height: `${12 + Math.sin(i * 0.7) * 10 + Math.random() * 8}px` }} />
+                  ))}
+                </div>
+
+                <div className="lp-db-cards">
+                  <div className="lp-db-card">
+                    <div className="lp-db-card-label lp-db-card-label--purple">Precision Transcript</div>
+                    <div className="lp-db-card-text">Auto-detected speaker diarization in discrete sentence or thematic units across 4-hour recording.</div>
+                  </div>
+                  <div className="lp-db-card">
+                    <div className="lp-db-card-label lp-db-card-label--cyan">Executive Cluster</div>
+                    <div className="lp-db-card-text">Zero-shot semantic groupings across visual and dialogue frames without manual labels.</div>
+                  </div>
+                  <div className="lp-db-card">
+                    <div className="lp-db-card-label lp-db-card-label--green">Action Outcomes</div>
+                    <div className="lp-db-card-text">8 time-anchored tasks with probabilistic ownership &amp; delivery metrics on each step.</div>
+                  </div>
+                  <div className="lp-db-card">
+                    <div className="lp-db-card-label lp-db-card-label--amber">Key Decisions &amp; Shifts</div>
+                    <div className="lp-db-card-text">5 architectural agreements and GPU training pivot to frontier AI strategies.</div>
+                  </div>
+                </div>
               </div>
-              <div className="lp-mockup__results">
-                <div className="lp-mockup__result-row">
-                  <span className="lp-mockup__result-label lp-mockup__result-label--green">Summary</span>
-                  <span className="lp-mockup__result-bar" style={{width:"78%"}} />
+
+              {/* Chat panel */}
+              <div className="lp-db-chat">
+                <div className="lp-db-chat-header">AI DIALOGUE</div>
+                <div className="lp-db-messages">
+                  <div className="lp-db-msg lp-db-msg--ai">What were the key technical decisions made?</div>
+                  <div className="lp-db-msg lp-db-msg--user">The team agreed to adopt RAG-based retrieval with ChromaDB for millisecond-accurate video frame citations…</div>
+                  <div className="lp-db-msg lp-db-msg--ai">What action items have owner assignments?</div>
                 </div>
-                <div className="lp-mockup__result-row">
-                  <span className="lp-mockup__result-label lp-mockup__result-label--cyan">Action items</span>
-                  <span className="lp-mockup__result-bar" style={{width:"55%"}} />
-                </div>
-                <div className="lp-mockup__result-row">
-                  <span className="lp-mockup__result-label lp-mockup__result-label--purple">Key decisions</span>
-                  <span className="lp-mockup__result-bar" style={{width:"62%"}} />
-                </div>
-                <div className="lp-mockup__chat">
-                  <span className="lp-mockup__chat-msg lp-mockup__chat-msg--user">What were the key outcomes?</span>
-                  <span className="lp-mockup__chat-msg lp-mockup__chat-msg--ai">The team agreed to ship v2 by Friday, with...</span>
+                <div className="lp-db-chat-input">
+                  <span>Ask about this video…</span>
+                  <span className="lp-db-send"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg></span>
                 </div>
               </div>
             </div>
@@ -81,42 +156,44 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ─────────────────────────────────────────── */}
-      <section className="lp-section">
-        <div className="lp-section__inner">
-          <div className="lp-section__kicker">What Videxa does</div>
-          <h2 className="lp-section__h2">Everything your meetings produce,<br />organized instantly.</h2>
-          <div className="lp-features">
+      <section className="lp-features-section" id="features">
+        <div className="lp-features-inner">
+          <div className="lp-feat-grid">
 
-            <div className="lp-feat">
-              <div className="lp-feat__icon lp-feat__icon--purple">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+            <div className="lp-feat2">
+              <div className="lp-feat2__icon lp-feat2__icon--green">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
               </div>
-              <h3 className="lp-feat__title">Accurate Transcription</h3>
-              <p className="lp-feat__desc">Whisper-powered speech-to-text that handles English and Hinglish. Works on YouTube URLs and uploaded audio/video files.</p>
+              <h3 className="lp-feat2__title">Zero-Latency Ingest</h3>
+              <p className="lp-feat2__desc">Directly paste YouTube URLs, HLS livestreams, or drag-and-drop ProRes footage up to 4K without manual transcoding.</p>
+              <span className="lp-feat2__tag">+1 More: Screen Sharing</span>
             </div>
 
-            <div className="lp-feat">
-              <div className="lp-feat__icon lp-feat__icon--cyan">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <div className="lp-feat2">
+              <div className="lp-feat2__icon lp-feat2__icon--blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               </div>
-              <h3 className="lp-feat__title">AI Analysis</h3>
-              <p className="lp-feat__desc">Gemini extracts a structured summary, action items, key decisions, and open questions — automatically, every time.</p>
+              <h3 className="lp-feat2__title">Acoustic &amp; Visual Index</h3>
+              <p className="lp-feat2__desc">Dual vectorization maps speech diarization directly to on-screen slides, diagrams, and optical character fields.</p>
+              <span className="lp-feat2__tag lp-feat2__tag--blue">99.4% Multi-Speaker Accuracy</span>
             </div>
 
-            <div className="lp-feat">
-              <div className="lp-feat__icon lp-feat__icon--green">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div className="lp-feat2">
+              <div className="lp-feat2__icon lp-feat2__icon--purple">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               </div>
-              <h3 className="lp-feat__title">RAG Chat</h3>
-              <p className="lp-feat__desc">Ask anything about one meeting or many at once. Answers are grounded in the actual transcript — no hallucinations.</p>
+              <h3 className="lp-feat2__title">Millisecond Citations</h3>
+              <p className="lp-feat2__desc">Eliminate AI hallucinations. Every synthesis bubble links directly to the exact millisecond video frame source.</p>
+              <span className="lp-feat2__tag lp-feat2__tag--purple">Grounded Multi-Modal RAG</span>
             </div>
 
-            <div className="lp-feat">
-              <div className="lp-feat__icon lp-feat__icon--amber">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            <div className="lp-feat2">
+              <div className="lp-feat2__icon lp-feat2__icon--teal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5.5" y2="16"/><line x1="12" y1="8" x2="18.5" y2="16"/></svg>
               </div>
-              <h3 className="lp-feat__title">Multi-Session</h3>
-              <p className="lp-feat__desc">Select multiple past meetings and ask cross-session questions. "What action items are still open across all our Q4 calls?"</p>
+              <h3 className="lp-feat2__title">Structured Graphs</h3>
+              <p className="lp-feat2__desc">Auto-generate relational knowledge graphs, task checklists, and executive summaries directly exportable to Notion &amp; Linear.</p>
+              <span className="lp-feat2__tag lp-feat2__tag--teal">Automated Linear Sync</span>
             </div>
 
           </div>
@@ -124,7 +201,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── How it works ─────────────────────────────────────── */}
-      <section className="lp-section lp-section--alt">
+      <section className="lp-section lp-section--alt" id="how-it-works">
         <div className="lp-section__inner">
           <div className="lp-section__kicker">How it works</div>
           <h2 className="lp-section__h2">From video to insights<br />in three steps.</h2>
@@ -149,7 +226,7 @@ export default function LandingPage() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
               </div>
               <h3 className="lp-step__title">AI Processes</h3>
-              <p className="lp-step__desc">Whisper transcribes the audio, Gemini analyzes the text, and ChromaDB indexes it for search.</p>
+              <p className="lp-step__desc">Whisper transcribes audio, Gemini analyzes the text, and ChromaDB indexes every frame for instant search.</p>
             </div>
 
             <div className="lp-step__arrow" aria-hidden="true">
@@ -185,9 +262,13 @@ export default function LandingPage() {
       {/* ── Footer ───────────────────────────────────────────── */}
       <footer className="lp-footer">
         <div className="lp-footer__inner">
-          <span className="lp-footer__brand">Videxa</span>
-          <span className="lp-footer__copy">Built with Whisper · Gemini · ChromaDB · Next.js</span>
-          <Link href="/app" className="lp-footer__link">Launch App →</Link>
+          <span className="lp-footer__brand">VIDEXA</span>
+          <span className="lp-footer__copy">© 2025 VIDEXA Intelligence. All rights reserved.</span>
+          <div className="lp-footer__links">
+            <Link href="/app" className="lp-footer__link">Privacy</Link>
+            <Link href="/app" className="lp-footer__link">Terms</Link>
+            <Link href="/app" className="lp-footer__link">API</Link>
+          </div>
         </div>
       </footer>
     </div>

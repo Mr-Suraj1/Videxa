@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import logging
+import time
 import uuid
 from collections.abc import Callable
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from core.extractor import (
     extract_action_items,
@@ -45,12 +49,16 @@ def analyze_saved_transcript(session_id: str, on_step: Callable[[str, str], None
         update("title", "active")
         title = generate_title(transcript)
         update("title", "done")
+        time.sleep(4)
         update("summary", "active")
         summary = summarize(transcript)
         update("summary", "done")
+        time.sleep(4)
         update("extract", "active")
         action_items = extract_action_items(transcript)
+        time.sleep(4)
         key_decisions = extract_key_decisions(transcript)
+        time.sleep(4)
         open_questions = extract_questions(transcript)
         update("extract", "done")
 
@@ -62,6 +70,7 @@ def analyze_saved_transcript(session_id: str, on_step: Callable[[str, str], None
     except Exception as exc:
         category = getattr(exc, "category", None)
         status = "quota" if category == "quota" else "rate_limited" if category == "rate_limit" else "failed"
+        logger.exception("Videxa analysis failed for session %s (category=%s)", session_id, category)
         # Store a safe, actionable message, never raw provider details or credentials.
         safe_error = str(exc) if category in {"quota", "rate_limit"} else "Analysis failed. Retry analysis for this saved transcript."
         update_session_status(session_id, analysis_status=status, analysis_error=safe_error)

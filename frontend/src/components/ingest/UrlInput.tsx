@@ -10,14 +10,13 @@ type Props = {
 };
 
 const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "hi", label: "Hindi" },
-  { value: "auto", label: "Auto-detect" },
+  { value: "english", label: "English" },
+  { value: "hinglish", label: "Hinglish" },
 ];
 
 export function UrlInput({ onSubmit, busy }: Props) {
   const [url, setUrl] = useState("");
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState("english");
 
   const ytId = extractYouTubeId(url);
 

@@ -24,7 +24,7 @@ export function ExportActions({ analysis }: Props) {
         filename = "transcript.txt";
       } else if (type === "analysis") {
         blob = await api.exportAnalysis({ ...a, transcript: analysis.transcript });
-        filename = "analysis.docx";
+        filename = "analysis.md";
       } else {
         blob = await api.exportPdf({ ...a, transcript: analysis.transcript });
         filename = "analysis.pdf";
@@ -44,7 +44,7 @@ export function ExportActions({ analysis }: Props) {
         <FileText size={14} /> Transcript
       </Button>
       <Button variant="secondary" size="sm" loading={busy === "analysis"} onClick={() => download("analysis")}>
-        <FileSpreadsheet size={14} /> Analysis DOCX
+        <FileSpreadsheet size={14} /> Analysis MD
       </Button>
       <Button variant="secondary" size="sm" loading={busy === "pdf"} onClick={() => download("pdf")}>
         <FileDown size={14} /> Analysis PDF

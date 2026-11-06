@@ -1,3 +1,5 @@
+import time
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -28,7 +30,10 @@ def summarize(transcript : str) -> str:
 
     chunks = split_transcript(transcript)
 
-    chunk_summaries = [map_chain.invoke({"text" : chunk}) for chunk in chunks]
+    chunk_summaries = []
+    for chunk in chunks:
+        chunk_summaries.append(map_chain.invoke({"text": chunk}))
+        time.sleep(4)
 
     combined = "\n\n".join(chunk_summaries)
 

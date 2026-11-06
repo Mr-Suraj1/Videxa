@@ -65,6 +65,11 @@ def build_vector_store(
         persist_directory=CHROMA_DIR,
     )
     ids = [f"{resolved_session_id}_{index}" for index in range(len(docs))]
+    # Delete existing docs with these IDs first so retry analysis doesn't crash
+    try:
+        vector_store._collection.delete(ids=ids)
+    except Exception:
+        pass
     vector_store.add_documents(documents=docs, ids=ids)
 
     return vector_store

@@ -1,5 +1,6 @@
 "use client";
-import { Menu, Wifi, WifiOff } from "lucide-react";
+import Link from "next/link";
+import { Menu } from "lucide-react";
 import { useUiStore } from "@/store/ui";
 
 export function Topbar() {
@@ -7,20 +8,21 @@ export function Topbar() {
 
   return (
     <header className="topbar">
-      <button
-        className="topbar__hamburger"
-        onClick={toggleSidebar}
-        aria-label="Toggle sidebar"
-      >
-        <Menu size={20} />
-      </button>
-      <span className="topbar__brand">Videxa</span>
-      <div className="topbar__status">
-        {apiOnline === null ? null : apiOnline ? (
-          <Wifi size={15} className="topbar__status--online" aria-label="API online" />
-        ) : (
-          <WifiOff size={15} className="topbar__status--offline" aria-label="API offline" />
-        )}
+      <div className="topbar__left">
+        <button className="topbar__hamburger" onClick={toggleSidebar} aria-label="Toggle sidebar">
+          <Menu size={18} />
+        </button>
+        <div className="topbar__breadcrumb">
+          <Link href="/" className="topbar__home-link">VIDEXA</Link>
+          <span className="topbar__sep">/</span>
+          <span className="topbar__page">Dashboard</span>
+        </div>
+      </div>
+      <div className="topbar__right">
+        <div className={`topbar__status topbar__status--${apiOnline === null ? "offline" : apiOnline ? "online" : "offline"}`}>
+          <span className="topbar__status-dot" />
+          {apiOnline === null ? "Connecting" : apiOnline ? "Online" : "Offline"}
+        </div>
       </div>
     </header>
   );

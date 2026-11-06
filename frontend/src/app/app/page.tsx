@@ -72,26 +72,13 @@ export default function AppPage() {
         <Topbar />
 
         <div className="content-wrap">
-          <div className="welcome-row">
-            <div>
-              <div className="eyebrow">
-                <span className="eyebrow-line" />
-                VIDEXA&nbsp;AI
-              </div>
-              <h1>Your meeting,&nbsp;decoded.</h1>
-              <p>Paste a YouTube link or upload audio/video to extract insights instantly.</p>
+          <div className="dash-welcome">
+            <div className="dash-welcome__eyebrow">
+              <span className="dash-welcome__dot" />
+              VIDEXA AI
             </div>
-            <div className="welcome-orb" aria-hidden="true">
-              <div className="orb-core">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              </div>
-              <div className="orb-ring ring-one" />
-              <div className="orb-ring ring-two" />
-              <div className="orb-dot dot-one" />
-              <div className="orb-dot dot-two" />
-            </div>
+            <h1 className="dash-welcome__h1">Analyze a video</h1>
+            <p className="dash-welcome__sub">Paste a YouTube link or upload audio/video to extract transcripts, summaries and AI-grounded insights.</p>
           </div>
 
           <IngestCard onAnalyze={handleAnalyze} busy={busy} />

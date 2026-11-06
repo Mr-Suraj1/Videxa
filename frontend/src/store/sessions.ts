@@ -66,6 +66,10 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
         sessionContent: content,
         savedTranscript: content.transcript,
         contentLoading: false,
+        // Fix #1: populate analysis so ResultsSection renders for saved sessions
+        analysis: content.analysis
+          ? { status: "completed", session_id: content.session_id, transcript: content.transcript, analysis: content.analysis }
+          : null,
       });
     } catch {
       set({ contentLoading: false });
@@ -73,7 +77,7 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
   },
 
   analyze: async (source, language) => {
-    set({ busy: true, analysis: null });
+    set({ busy: true, analysis: null, selectedSession: null });
     try {
       const result =
         typeof source === "string"
@@ -85,8 +89,15 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
         busy: false,
       });
       await get().refreshSessions();
+      await get().loadSession(result.session_id);
     } catch (err) {
       set({ busy: false });
+      // If transcript was saved but analysis failed, surface the session so user can retry
+      if (err instanceof api.ApiError && err.session_id) {
+        await get().refreshSessions();
+        await get().loadSession(err.session_id);
+        await get().loadSessionContent(err.session_id);
+      }
       throw err;
     }
   },

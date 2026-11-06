@@ -91,6 +91,16 @@ def invoke_with_gemini_retry(model: Any, prompt: Any) -> Any:
             return model.invoke(prompt)
         except Exception as exc:
             status = _http_status(exc)
+            # Explicit model-not-found check before auth check
+            cls_name = type(exc).__name__
+            if cls_name in ("GoogleModelNotFoundError", "ModelNotFoundError") or status == 404:
+                model_name = getattr(model, "model", "unknown")
+                raise GeminiProviderError(
+                    f"Gemini model '{model_name}' was not found. Update GEMINI_MODEL in your .env file "
+                    f"(try: gemini-2.0-flash or gemini-1.5-flash-latest).",
+                    category="config",
+                    status_code=404,
+                ) from exc
             if _is_auth_failure(exc, status):
                 raise GeminiProviderError(
                     "Gemini API rejected the credentials. Check GOOGLE_API_KEY in the backend environment.",

@@ -9,14 +9,13 @@ type Props = {
 };
 
 const LANGUAGES = [
-  { value: "en", label: "English" },
-  { value: "hi", label: "Hindi" },
-  { value: "auto", label: "Auto-detect" },
+  { value: "english", label: "English" },
+  { value: "hinglish", label: "Hinglish" },
 ];
 
 export function FileDropzone({ onSubmit, busy }: Props) {
   const [file, setFile] = useState<File | null>(null);
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState("english");
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 

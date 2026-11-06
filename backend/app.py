@@ -147,10 +147,12 @@ def process(request: ProcessingRequest) -> ProcessingResponse | JSONResponse:
     try:
         result = services.run_pipeline(request.source, request.language)
     except AnalysisFailure as exc:
+        logger.warning("Analysis failure (session=%s cause=%s)", exc.session_id, exc.cause, exc_info=exc.cause)
         return _analysis_failure_response(exc)
     except InputValidationError as exc:
         raise _http_error(400, str(exc)) from exc
     except (MediaProcessingError, TranscriptionError) as exc:
+        logger.exception("Media/transcription error during processing")
         raise _http_error(502, str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         raise _provider_http_error(exc) from exc
@@ -238,6 +240,10 @@ def _analysis_failure_response(exc: AnalysisFailure) -> JSONResponse:
         detail = str(cause)
         status_code = 429
         analysis_status = "rate_limited"
+    elif category == "config":
+        detail = str(cause)
+        status_code = 400
+        analysis_status = "failed"
     elif isinstance(cause, httpx.HTTPStatusError):
         status_code = 503 if cause.response.status_code in {401, 403} else 502
         detail = "Gemini rejected the credentials. Check the backend GOOGLE_API_KEY configuration." if status_code == 503 else "Analysis failed due to a provider error. The saved transcript can be analyzed again later."
@@ -261,7 +267,7 @@ def chat(request: ChatRequest) -> ChatResponse:
     except ValueError as exc:
         raise _http_error(400, str(exc)) from exc
     except VectorStoreUnavailableError as exc:
-        raise _http_error(404, str(exc)) from exc
+        raise _http_error(400, "This video has not been fully processed yet. Wait for analysis to complete before asking questions.") from exc
     except httpx.HTTPStatusError as exc:
         raise _provider_http_error(exc) from exc
     except GeminiProviderError as exc:
@@ -279,7 +285,7 @@ def chat_multiple(request: MultiChatRequest) -> MultiChatResponse:
     except ValueError as exc:
         raise _http_error(400, str(exc)) from exc
     except VectorStoreUnavailableError as exc:
-        raise _http_error(404, str(exc)) from exc
+        raise _http_error(400, "One or more selected videos have not been fully processed yet. Wait for analysis to complete before asking questions.") from exc
     except httpx.HTTPStatusError as exc:
         raise _provider_http_error(exc) from exc
     except GeminiProviderError as exc:
