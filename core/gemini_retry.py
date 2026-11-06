@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import email.utils
+import logging
 import random
 import time
 from datetime import datetime, timezone
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 MAX_ATTEMPTS = 3
 MAX_RETRY_AFTER_SECONDS = 30.0
@@ -95,9 +98,10 @@ def invoke_with_gemini_retry(model: Any, prompt: Any) -> Any:
             cls_name = type(exc).__name__
             if cls_name in ("GoogleModelNotFoundError", "ModelNotFoundError") or status == 404:
                 model_name = getattr(model, "model", "unknown")
+                logger.error("Model not found raw error (cls=%s): %s", cls_name, exc)
                 raise GeminiProviderError(
                     f"Gemini model '{model_name}' was not found. Update GEMINI_MODEL in your .env file "
-                    f"(try: gemini-2.0-flash or gemini-1.5-flash-latest).",
+                    f"(try: gemini-2.5-flash or gemini-2.0-flash-001).",
                     category="config",
                     status_code=404,
                 ) from exc

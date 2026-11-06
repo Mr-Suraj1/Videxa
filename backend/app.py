@@ -39,7 +39,7 @@ from core.vector_store import VectorStoreUnavailableError
 from utils.audio_processor import InputValidationError, MediaProcessingError, SUPPORTED_MEDIA_EXTENSIONS
 
 logger = logging.getLogger(__name__)
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI(
     title="Videxa API",
